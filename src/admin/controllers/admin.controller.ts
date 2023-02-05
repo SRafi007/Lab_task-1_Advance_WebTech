@@ -1,10 +1,50 @@
-import {Body, Controller,Delete,Get,Param,Post, Put, Query} from "@nestjs/common";
+import {Body, Controller,Delete,Get,Param,Post, Put, Query,Req, UsePipes,ValidationPipe,Session,Patch} from "@nestjs/common";
 import { AdminService } from "../services/admin.service";
 import { userDTO } from "src/DTO's/userDTO";
+import {Request} from "express";
+import {AdminDTO} from "src/DTO's/adminDTO";
+import { LoginService } from "src/Common/login.service";
+import session from "express-session";
+import { MailDTO } from "src/DTO's/mailDTO";
+
 
 @Controller('admin')
 export class AdminController{
-    constructor(private  adminService: AdminService){}
+    constructor(private  adminService: AdminService, private loginService: LoginService){}
+
+
+@Post("/login")
+@UsePipes(new ValidationPipe())
+adminLogin( @Body()admin:AdminDTO){
+    return this.loginService.adminLogin(admin);
+}
+@Get("/profile")
+adminProfile(@Session() session:any ){
+    console.log(session.id);
+    session("uname","rafi");
+    return session["uname"];
+
+}
+
+@Post("/mail/:admin")
+sendMail(@Body()mail:MailDTO,@Param('admin')admin:string){
+
+
+        return this.adminService.sendMail(mail,admin);
+}
+@Get("/mailbox")
+viewMailBox(@Query("sort")sortBy:string){
+    return sortBy;
+
+}
+
+@Get("/dashboard")
+dashboard(){
+    let tempAdminCount=this.loginService.adminCount();
+    let tempUserData=this.adminService.getUsers();
+    let userCount=tempUserData.length;
+    return "Active Admin:"+tempAdminCount+"\n Total users:"+userCount;
+}
 @Get("/users")
 getUsers(){
     return this.adminService.getUsers();
@@ -22,7 +62,7 @@ getQuary(@Query("sort")sortBy:boolean)
 addUser(@Body() newUser:userDTO ){
     return this.adminService.insertUser(newUser);
 }
-@Post("/delete/:id")
+@Delete("/delete/:id")
 deleteUserById(@Param("id")Id:string){
     return this.adminService.deleteUserById(Id);
 }
@@ -32,4 +72,9 @@ updateUserById(@Param("id")Id:string, @Body("Name")Name:string,@Body("Mail")Mail
     
     return this.adminService.updateUserById(user);
 }
+@Patch("/employee/:id")
+getEmployeeById(@Param("id")Id:string){
+    return this.adminService.getEmployeeById(Id);
+}
+
 }
